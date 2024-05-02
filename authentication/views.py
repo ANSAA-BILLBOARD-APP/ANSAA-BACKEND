@@ -106,8 +106,8 @@ class RequestOTP(APIView):
                 otp_obj.otp = otp_code
                 otp_obj.save()
             
-            return Response({"message": "OTP generated and sent successfully.", "status": "SUCCESS"}, status=status.HTTP_201_CREATED)
-        return Response({"message": "Error generating OTP.", "status": "ERROR"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({"message": "OTP generated and sent successfully."}, status=status.HTTP_201_CREATED)
+        return Response({"message": "Error generating OTP."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 

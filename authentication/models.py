@@ -37,7 +37,9 @@ class CustomAccountManager(BaseUserManager):
         """
         if not email:
             raise ValueError(_('You must provide an email address'))
+            
         other_fields.setdefault('is_active', True)
+
         user_id_prefix = 'ansa'
         user_id_suffix = uuid.uuid4().hex[:6]  # Generate 6-character random suffix
 
@@ -89,7 +91,7 @@ class AnsaaUser(AbstractBaseUser, PermissionsMixin):
     gender = models.TextField(choices=GENDER_CHOICES, null=True, blank=True)
     picture = models.ImageField(upload_to=get_profile_image_filepath, blank=True)
     is_staff = models.BooleanField(_('staff status'), default=False)
-    is_active = models.BooleanField(_('active'), default=False)
+    is_active = models.BooleanField(_('active'), default=True)
 
     def save(self, *args, **kwargs):
         if not self.picture:  # If no picture is provided
