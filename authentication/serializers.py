@@ -8,10 +8,12 @@ from .models import AnsaaUser, OTP
 
 
 class RequestOTPSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(required=False)
+    phone_number = PhoneNumberField(required=False)
     
     class Meta:
         model = OTP
-        fields = ["email"]
+        fields = ["email", "phone_number"]
 
 class OTPVerificationSerializer(serializers.ModelSerializer):
     
@@ -22,13 +24,16 @@ class OTPVerificationSerializer(serializers.ModelSerializer):
 
 # USER REGISTRATION API SERIALIZER
 class RegistrationSerializer(serializers.Serializer):
-    email = serializers.EmailField()
-    phone_number = PhoneNumberField()
-
+    email = serializers.EmailField(required=False)
+    phone_number = PhoneNumberField(required=False)
+    fullname = serializers.CharField(required=False)
     
     class Meta:
         model: AnsaaUser
-        fields: ['email', 'phone_number']
+        fields: ['email','phone_number','fullname']
+
+    def create(self, validated_data):
+        return AnsaaUser.objects.create(**validated_data)
 
 
 class ProfileSerializer(serializers.ModelSerializer):

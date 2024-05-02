@@ -15,8 +15,7 @@ class EmailThread(threading.Thread):
     def run(self):
         self.email_message.send()
 
-def generate_otp(email):
-    if email:
+def generate_otp():
         # Generate a 6-digit OTP
         otp = ''.join(random.choices(string.digits, k=6))
         # expiration_time = timezone.now() + timezone.timedelta(minutes=5)

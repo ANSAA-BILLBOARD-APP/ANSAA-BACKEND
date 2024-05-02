@@ -117,7 +117,8 @@ class AnsaaUser(AbstractBaseUser, PermissionsMixin):
 
 
 class OTP(models.Model):
-    email = models.EmailField()
+    email = models.EmailField(blank=True, unique=True)
+    phone_number = PhoneNumberField(null=False, unique=True, blank=True)
     otp = models.CharField(max_length=6)
     expiration_time = models.DateTimeField()
     verified = models.BooleanField(default=False)
