@@ -194,7 +194,6 @@ class UserProfileViews(APIView):
 
 class RegistrationAPIView(APIView):
     permission_classes = [AllowAny]
-    # permission_classes = [HasAPIKey]
 
     def post(self, request, format=None):
         serializer = RegistrationSerializer(data=request.data)
