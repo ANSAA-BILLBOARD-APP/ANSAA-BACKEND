@@ -37,7 +37,7 @@ class CustomAccountManager(BaseUserManager):
         """
         if not email:
             raise ValueError(_('You must provide an email address'))
-        
+        other_fields.setdefault('is_active', True)
         user_id_prefix = 'ansa'
         user_id_suffix = uuid.uuid4().hex[:6]  # Generate 6-character random suffix
 

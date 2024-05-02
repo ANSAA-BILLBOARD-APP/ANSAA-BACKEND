@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from rest_framework.exceptions import NotFound
 from django.db import DatabaseError
+from django.db.models import Q
 from django.conf import settings
 from django.utils import timezone
 from rest_framework.serializers import ValidationError
@@ -25,7 +26,7 @@ from . task import generate_otp, EmailThread
 class RequestOTP(APIView):
     serializer_class = RequestOTPSerializer
 
-    def post(self, request):
+    def post(self, request, format="json"):
         serializer = self.serializer_class(data=request.data)
         try:
             serializer.is_valid(raise_exception=True)
@@ -51,23 +52,24 @@ class RequestOTP(APIView):
             return Response({'message': 'Invalid user credential'}, status=status.HTTP_400_BAD_REQUEST)
 
         # Generate a random 6-digit OTP
-        otp = generate_otp()
+        otp_code = generate_otp()
         expiration_time = timezone.now() + timezone.timedelta(minutes=5)
 
-        check_otp_by_email = OTP.objects.filter(email=email).last()
-        check_otp_by_phone_number = OTP.objects.filter(email=email).last()
-        if not otp.is_expired():
-            response = {
-                    'message': 'Please try again in 5 minutes time',
-                }
-            return Response(data=response, status=status.HTTP_400_BAD_REQUEST)
+        existing_otp = OTP.objects.filter(
+            Q(email=email) | Q(phone_number=phone_number)
+        )
 
-        if otp:
-            print(f"OTP: {otp}")
+        if existing_otp.exists():
+            existing_otp = existing_otp.first()
+            if not existing_otp.expired:
+                return Response({'error': 'OTP already sent. Please check for the existing OTP.'}, status=HTTP_400_BAD_REQUEST)
+
+        if email:
+            print(f"OTP: {otp_code}")
             # Send the email with OTP
             email_subject = 'Ansaa OTP'
             template = loader.get_template('mail_template.txt')
-            parameters = {'otp': otp}
+            parameters = {'otp': otp_code}
             email_content = template.render(parameters)
 
             email_message = EmailMultiAlternatives(
@@ -82,15 +84,29 @@ class RequestOTP(APIView):
             EmailThread(email_message).start()
 
             # Store OTP and its expiration time
-            otp_obj, created = OTP.objects.get_or_create(email=email, defaults={'otp': otp, 'expiration_time': expiration_time})
+            otp_obj, created = OTP.objects.get_or_create(email=email, defaults={'otp': otp_code, 'expiration_time': expiration_time})
             if not created:
                 otp_obj, created = OTP.objects.get_or_create(email=email)
                 otp_obj.expiration_time = expiration_time 
-                otp_obj.otp = otp
+                otp_obj.otp = otp_code
                 otp_obj.save()
             
             return Response({"message": "OTP generated and sent successfully.", "status": "SUCCESS"}, status=status.HTTP_201_CREATED)
         
+        elif phone_number:
+            print(f"OTP: {otp_code}")
+            # Send OTP to phone number
+
+
+            # Store OTP and its expiration time
+            otp_obj, created = OTP.objects.get_or_create(email=email, defaults={'otp': otp_code, 'expiration_time': expiration_time})
+            if not created:
+                otp_obj, created = OTP.objects.get_or_create(email=email)
+                otp_obj.expiration_time = expiration_time 
+                otp_obj.otp = otp_code
+                otp_obj.save()
+            
+            return Response({"message": "OTP generated and sent successfully.", "status": "SUCCESS"}, status=status.HTTP_201_CREATED)
         return Response({"message": "Error generating OTP.", "status": "ERROR"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
@@ -234,7 +250,7 @@ class RegistrationAPIView(APIView):
                     user_serializer = RegistrationSerializer(data=user_data)
                     if user_serializer.is_valid():
                         user_serializer.save()
-
+                        user = user_serializer.instance
                         otp_exist.delete()
 
                         # Generate JWT token
@@ -243,7 +259,7 @@ class RegistrationAPIView(APIView):
                         return Response({'message': 'User registered successfully', 'access_token': access_token}, status=status.HTTP_201_CREATED)
                     else:
                         return Response(user_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                return Response({'message': 'Invalid user credential'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'message': 'Unvarified email'}, status=status.HTTP_400_BAD_REQUEST)
 
             elif otp_exist_phone:
                 if otp_exist_phone.verified:
@@ -255,7 +271,7 @@ class RegistrationAPIView(APIView):
                     user_serializer = RegistrationSerializer(data=user_data)
                     if user_serializer.is_valid():
                         user_serializer.save()
-
+                        user = user_serializer.instance
                         otp_exist_phone.delete()
 
                         # Generate JWT token
