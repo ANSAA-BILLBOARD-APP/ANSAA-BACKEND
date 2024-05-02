@@ -4,6 +4,7 @@ from django.db import DatabaseError
 from django.conf import settings
 from django.utils import timezone
 from rest_framework.serializers import ValidationError
+from rest_framework_simplejwt.tokens import RefreshToken
 from django.core.mail import EmailMultiAlternatives, EmailMessage
 from rest_framework.views import APIView
 from rest_framework.request import Request
@@ -44,7 +45,9 @@ class RequestOTP(APIView):
             return Response({"message": "Email address contains invalid characters.", "status": "ERROR"}, status=status.HTTP_400_BAD_REQUEST)
 
         # Check if user already exists
-        if not AnsaaApprovedUser.objects.filter(email=email).exists() or not  AnsaaApprovedUser.objects.filter(phone_number=phone_number).exists():
+        approved_user = AnsaaApprovedUser.objects.filter(email=email).first()
+        approved_user_number = AnsaaApprovedUser.objects.filter(phone_number=phone_number).first()
+        if not approved_user or approved_user_number:
             return Response({'message': 'Invalid user credential'}, status=status.HTTP_400_BAD_REQUEST)
 
         # Generate a random 6-digit OTP
@@ -59,34 +62,34 @@ class RequestOTP(APIView):
                 }
             return Response(data=response, status=status.HTTP_400_BAD_REQUEST)
 
-        # if otp:
-        #     print(f"OTP: {otp}")
-        #     # Send the email with OTP
-        #     email_subject = 'Ansaa OTP'
-        #     template = loader.get_template('mail_template.txt')
-        #     parameters = {'otp': otp}
-        #     email_content = template.render(parameters)
+        if otp:
+            print(f"OTP: {otp}")
+            # Send the email with OTP
+            email_subject = 'Ansaa OTP'
+            template = loader.get_template('mail_template.txt')
+            parameters = {'otp': otp}
+            email_content = template.render(parameters)
 
-        #     email_message = EmailMultiAlternatives(
-        #         email_subject,
-        #         email_content,
-        #         settings.EMAIL_HOST_USER,
-        #         [email]
-        #     )
-        #     email_message.content_subtype = 'html'
+            email_message = EmailMultiAlternatives(
+                email_subject,
+                email_content,
+                settings.EMAIL_HOST_USER,
+                [email]
+            )
+            email_message.content_subtype = 'html'
 
-        #     # Start email sending thread
-        #     EmailThread(email_message).start()
+            # Start email sending thread
+            EmailThread(email_message).start()
 
-        #     # Store OTP and its expiration time
-        #     otp_obj, created = OTP.objects.get_or_create(email=email, defaults={'otp': otp, 'expiration_time': expiration_time})
-        #     if not created:
-        #         otp_obj, created = OTP.objects.get_or_create(email=email)
-        #         otp_obj.expiration_time = expiration_time 
-        #         otp_obj.otp = otp
-        #         otp_obj.save()
+            # Store OTP and its expiration time
+            otp_obj, created = OTP.objects.get_or_create(email=email, defaults={'otp': otp, 'expiration_time': expiration_time})
+            if not created:
+                otp_obj, created = OTP.objects.get_or_create(email=email)
+                otp_obj.expiration_time = expiration_time 
+                otp_obj.otp = otp
+                otp_obj.save()
             
-        #     return Response({"message": "OTP generated and sent successfully.", "status": "SUCCESS"}, status=status.HTTP_201_CREATED)
+            return Response({"message": "OTP generated and sent successfully.", "status": "SUCCESS"}, status=status.HTTP_201_CREATED)
         
         return Response({"message": "Error generating OTP.", "status": "ERROR"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -172,30 +175,32 @@ class UserProfileViews(APIView):
 
     def get(self, request, format=None):
         user_profile = AnsaaUser.objects.filter(email=request.user).first()
-
         if not user_profile:
-            return Response({'message': 'Permission denied'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'message': 'User profile not found'}, status=status.HTTP_404_NOT_FOUND)
         
         serializer = ProfileSerializer(user_profile)
         return Response(serializer.data)
-    
+
     def put(self, request, format=None):
-        passenger_profile = PassengerProfile.objects.get(email=request.user)
+        user_profile = AnsaaUser.objects.filter(email=request.user).first()
+        if not user_profile:
+            return Response({'message': 'User profile not found'}, status=status.HTTP_404_NOT_FOUND)
         
         picture = request.data.get('picture')
         if not picture:
             return Response({'message': 'Picture field is required'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        passenger_profile.picture = picture
-        passenger_profile.save()
-        
-        serializer = ProfileSerializer(passenger_profile)
+
+        user_profile.picture = picture
+        user_profile.save()
+
+        serializer = ProfileSerializer(user_profile)
         return Response(serializer.data)
+
 
 class RegistrationAPIView(APIView):
     permission_classes = [AllowAny]
 
-    def post(self, request, format=None):
+    def post(self, request, format='json'):
         serializer = RegistrationSerializer(data=request.data)
         if serializer.is_valid():
             email = request.data.get("email")
@@ -209,25 +214,56 @@ class RegistrationAPIView(APIView):
 
             approved_user = AnsaaApprovedUser.objects.filter(email=email).first()
             approved_user_number = AnsaaApprovedUser.objects.filter(phone_number=phone_number).first()
+
             if not approved_user or approved_user_number:
                 return Response({'message': 'Invalid user credential'}, status=status.HTTP_400_BAD_REQUEST)
 
-            
             fullname = approved_user.fullname
             phone_number = approved_user.phone_number
-            print(fullname)
-            
-            user_data = {
-                'email': email,
-                'phone_number': phone_number,
-                'fullname': fullname,
-            }
-            user_serializer = RegistrationSerializer(data=user_data)
-            if user_serializer.is_valid():
-                user_serializer.save()
-                return Response({'message': 'User registered successfully'}, status=status.HTTP_201_CREATED)
-            else:
-                return Response(user_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-  
+
+            otp_exist = OTP.objects.filter(email=email).first()
+            otp_exist_phone = OTP.objects.filter(phone_number=phone_number).first()
+            if otp_exist:
+
+                if otp_exist.verified:
+                    user_data = {
+                        'email': email,
+                        'phone_number': phone_number,
+                        'fullname': fullname,
+                    }
+                    user_serializer = RegistrationSerializer(data=user_data)
+                    if user_serializer.is_valid():
+                        user_serializer.save()
+
+                        otp_exist.delete()
+
+                        # Generate JWT token
+                        refresh = RefreshToken.for_user(user)
+                        access_token = str(refresh.access_token)
+                        return Response({'message': 'User registered successfully', 'access_token': access_token}, status=status.HTTP_201_CREATED)
+                    else:
+                        return Response(user_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'message': 'Invalid user credential'}, status=status.HTTP_400_BAD_REQUEST)
+
+            elif otp_exist_phone:
+                if otp_exist_phone.verified:
+                    user_data = {
+                        'email': email,
+                        'phone_number': phone_number,
+                        'fullname': fullname,
+                    }
+                    user_serializer = RegistrationSerializer(data=user_data)
+                    if user_serializer.is_valid():
+                        user_serializer.save()
+
+                        otp_exist_phone.delete()
+
+                        # Generate JWT token
+                        refresh = RefreshToken.for_user(user)
+                        access_token = str(refresh.access_token)
+                        return Response({'message': 'User registered successfully', 'access_token': access_token}, status=status.HTTP_201_CREATED)
+                    else:
+                        return Response(user_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'message': 'Invalid user credential'}, status=status.HTTP_400_BAD_REQUEST)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
