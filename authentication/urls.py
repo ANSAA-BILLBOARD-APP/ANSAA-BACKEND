@@ -7,4 +7,5 @@ urlpatterns = [
     path('auth/validate-otp/', views.ValidateOTPView.as_view()),
     path('auth/profile/', views.UserProfileViews.as_view()),
     path('auth/register/', views.RegistrationAPIView.as_view()),
+    path('auth/login/', views.LoginAPIView.as_view()),
 ]

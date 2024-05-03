@@ -16,7 +16,7 @@ from django.core.mail import send_mail
 from django.template import loader
 from django.contrib.sites.shortcuts import get_current_site
 from django.template.loader import render_to_string
-from . serializers import RequestOTPSerializer, LogoutSerializer, OTPVerificationSerializer, ProfileSerializer, RegistrationSerializer
+from . serializers import RequestOTPSerializer, LogoutSerializer, OTPVerificationSerializer, ProfileSerializer, RegistrationSerializer, LoginSerializer
 from . models import AnsaaUser, OTP, AnsaaApprovedUser
 from . task import generate_otp, EmailThread
 
@@ -94,8 +94,7 @@ class RequestOTP(APIView):
             return Response({"message": "OTP generated and sent successfully.", "status": "SUCCESS"}, status=status.HTTP_201_CREATED)
         
         elif phone_number:
-            print(f"OTP: {otp_code}")
-            # Send OTP to phone number
+            # Implement sending of OTP to phone number
 
 
             # Store OTP and its expiration time
@@ -108,8 +107,6 @@ class RequestOTP(APIView):
             
             return Response({"message": "OTP generated and sent successfully."}, status=status.HTTP_201_CREATED)
         return Response({"message": "Error generating OTP."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
 
 
 class ValidateOTPView(APIView):
@@ -259,7 +256,7 @@ class RegistrationAPIView(APIView):
                         return Response({'message': 'User registered successfully', 'access_token': access_token}, status=status.HTTP_201_CREATED)
                     else:
                         return Response(user_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                return Response({'message': 'Unvarified email'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'message': 'Unvarified identity'}, status=status.HTTP_400_BAD_REQUEST)
 
             elif otp_exist_phone:
                 if otp_exist_phone.verified:
@@ -282,4 +279,45 @@ class RegistrationAPIView(APIView):
                         return Response(user_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
                 return Response({'message': 'Invalid user credential'}, status=status.HTTP_400_BAD_REQUEST)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        
+
+
+class LoginAPIView(APIView):
+    def post(self, request, format=None):
+        serializer = LoginSerializer(data=request.data)
+        if serializer.is_verified():
+            email = serializer.validated_data.get("email")
+            phone_number = serializer.validated_data.get("otp")
+
+            #check if otp is in record and it's verified
+            existing_otp = OTP.objects.filter(
+            Q(email=email) | Q(phone_number=phone_number)
+            )
+            if existing_otp:
+                if email:
+                    if existing_otp.expired:
+                        user = AnsaaUser.objects.filter(email=email).first()
+                        if user:
+                            refresh = RefreshToken.for_user(user)
+                            exist_otp.delete()
+
+                            return Response({'refresh': str(refresh), 'access': str(refresh.access_token),}, status=status.HTTP_200_OK)  
+                        else:
+                            return Response({'error': 'Invalid user credentials'}, status.status.HTTP_400_BAD_REQUEST)
+                    else:
+                        otp_record.delete()
+                        return Response({'error':'OTP expired, request for another'}, status=status.HTTP_400_BAD_REQUEST)
+                elif phone_number:
+                    if existing_otp.expired:
+                        user = AnsaaUser.objects.filter(phone_number=phone_number).first()
+                        if user:
+                            refresh = RefreshToken.for_user(user)
+                            exist_otp.delete()
+
+                            return Response({'refresh': str(refresh), 'access': str(refresh.access_token),}, status=status.HTTP_200_OK)  
+                        else:
+                            return Response({'error': 'Invalid user credentials'}, status.status.HTTP_400_BAD_REQUEST)
+                    else:
+                        otp_record.delete()
+                        return Response({'error':'OTP expired, request for another'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'Invalid user credentials'}, status=status.HTTP_400_BAD_REQUEST)  
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

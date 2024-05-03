@@ -35,6 +35,14 @@ class RegistrationSerializer(serializers.Serializer):
     def create(self, validated_data):
         return AnsaaUser.objects.create(**validated_data)
 
+class LoginSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=False)
+    phone_number = PhoneNumberField(required=False)
+
+    class Meta:
+        model = AnsaaUser
+        fields= ['email','phone_number']
+
 
 class ProfileSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(source='email.email', read_only=True)
