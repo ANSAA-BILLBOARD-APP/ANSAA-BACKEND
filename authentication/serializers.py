@@ -16,10 +16,13 @@ class RequestOTPSerializer(serializers.ModelSerializer):
         fields = ["email", "phone_number"]
 
 class OTPVerificationSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(required=False)
+    phone_number = PhoneNumberField(required=False)
+    otp = serializers.CharField(required=True)
     
     class Meta:
         model = OTP
-        fields = ["email","otp"]    
+        fields = ["email", "phone_number", "otp"]   
 
 
 # USER REGISTRATION API SERIALIZER
