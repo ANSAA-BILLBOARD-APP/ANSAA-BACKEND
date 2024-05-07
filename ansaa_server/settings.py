@@ -160,13 +160,3 @@ SIMPLE_JWT = {
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'ngereharry5@gmail.com'
-EMAIL_HOST_PASSWORD = 'yygg yjbr vgxi oebz'
-
-account_sid = 'ACf70ef8fd878f32665058f3b67e6b67c6'
-auth_token = '428ffa7700978be12c3bb9e70d8b45d7'
