@@ -117,6 +117,35 @@ class AnsaaUser(AbstractBaseUser, PermissionsMixin):
     def __str__(self):
         return self.fullname
 
+class Task(models.Model):
+    title = models.CharField(max_length=100)
+    description = models.TextField()
+    is_completed = models.BooleanField(default=False)
+    owner = models.ForeignKey(AnsaaUser, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.title
+
+
+def create_default_task(sender, instance, created, **kwargs):
+    """
+    Create a default task for a user upon creation.
+    """
+    if created:
+        Task.objects.create(
+            title="Add a Profile Picture",
+            description="Upload a profile picture to personalize your account.",
+            owner=instance
+        )
+        Task.objects.create(
+            title="Add Device",
+            description="Add a device to access your account securely.",
+            owner=instance
+        )
+
+# Connect signal to create default task
+models.signals.post_save.connect(create_default_task, sender=AnsaaUser)
+
 
 class OTP(models.Model):
     email = models.EmailField(blank=True, unique=True)
@@ -144,7 +173,6 @@ class OTP(models.Model):
     def __str__(self):
         return f"OTP for {self.email}"
         
-
 
 class AnsaaApprovedUser(models.Model):
     email = models.EmailField(unique=True)
