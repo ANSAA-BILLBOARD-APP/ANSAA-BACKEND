@@ -30,10 +30,11 @@ class RegistrationSerializer(serializers.Serializer):
     email = serializers.EmailField(required=False)
     phone_number = PhoneNumberField(required=False)
     fullname = serializers.CharField(required=False)
+    gender = serializers.CharField(required=False)
     
     class Meta:
         model: AnsaaUser
-        fields: ['email','phone_number','fullname']
+        fields: ['email','phone_number','fullname','gender']
 
     def create(self, validated_data):
         return AnsaaUser.objects.create(**validated_data)

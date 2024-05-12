@@ -3,6 +3,7 @@ from rest_framework.exceptions import NotFound
 from django.db import DatabaseError
 from django.db.models import Q
 from django.utils import timezone
+from django.contrib.auth import authenticate
 from rest_framework.serializers import ValidationError
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.views import APIView
@@ -11,7 +12,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework import status
 from . serializers import RequestOTPSerializer, LogoutSerializer, OTPVerificationSerializer, ProfileSerializer, RegistrationSerializer, LoginSerializer
-from . models import AnsaaUser, OTP, AnsaaApprovedUser
+from . models import AnsaaUser, OTP, AnsaaApprovedUser, Task
 from . task import generate_otp, EmailThread, send_otp_email, send_otp_sms
 import asyncio
 
@@ -144,9 +145,9 @@ class LogoutView(APIView):
 
                 return Response({'message': 'Logout successful'}, status=status.HTTP_205_RESET_CONTENT)
             except Exception as e:
-                return Response({'message': 'Invalid token'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'error': 'Invalid token'}, status=status.HTTP_400_BAD_REQUEST)
         else:
-            return Response({'message': 'Refresh token not provided'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'Refresh token not provided'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 
@@ -155,15 +156,18 @@ class UserProfileViews(APIView):
     serializer_class = ProfileSerializer
 
     def get(self, request, format=None):
-        user_profile = AnsaaUser.objects.filter(email=request.user).first()
-        if not user_profile:
-            return Response({'message': 'User profile not found'}, status=status.HTTP_404_NOT_FOUND)
-        
-        serializer = ProfileSerializer(user_profile)
-        return Response(serializer.data)
+        user = request.user
+        try:  
+            user_profile = AnsaaUser.objects.get(pk=user.pk)
+            serializer = ProfileSerializer(user_profile)
+            return Response(serializer.data)
+        except AnsaaUser.DoesNotExist:
+            return Response({"error": "Profile not found"}, status=status.HTTP_404_NOT_FOUND)
 
     def put(self, request, format=None):
-        user_profile = AnsaaUser.objects.filter(email=request.user).first()
+        user = request.user
+        user_profile = AnsaaUser.objects.get(pk=user.pk)
+        update_profile_task = Task.objects.filter(owner=request.user).first()
         if not user_profile:
             return Response({'message': 'User profile not found'}, status=status.HTTP_404_NOT_FOUND)
         
@@ -173,6 +177,8 @@ class UserProfileViews(APIView):
 
         user_profile.picture = picture
         user_profile.save()
+        update_profile_task.is_completed = True
+        update_profile_task.save()
 
         serializer = ProfileSerializer(user_profile)
         return Response(serializer.data)
@@ -187,8 +193,6 @@ class RegistrationAPIView(APIView):
             email = request.data.get("email")
             phone_number = request.data.get('phone_number')
 
-            print(f"phone number: {phone_number}")
-            print(f"user email: {email}")
 
             if AnsaaUser.objects.filter(email=email).exists() or  AnsaaUser.objects.filter(phone_number=phone_number).exists():
                 return Response({'message': 'User already exist'}, status=status.HTTP_400_BAD_REQUEST)
@@ -204,12 +208,14 @@ class RegistrationAPIView(APIView):
                 fullname = approved_user.fullname
                 phone_number = approved_user.phone_number
                 email = approved_user.email
+                gender = approved_user.gender
 
                 if existing_otp.verified:
                     user_data = {
                         'email': email,
                         'phone_number': phone_number,
                         'fullname': fullname,
+                        'gender': gender,
                     }
                     user_serializer = RegistrationSerializer(data=user_data)
                     if user_serializer.is_valid():
@@ -223,9 +229,9 @@ class RegistrationAPIView(APIView):
                         return Response({'message': 'User registered successfully', 'access_token': access_token}, status=status.HTTP_201_CREATED)
                     else:
                         return Response(user_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                return Response({'message': 'Unvarified identity'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'error': 'Unvarified identity'}, status=status.HTTP_400_BAD_REQUEST)
 
-            return Response({'message': 'Invalid user credential'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'Invalid user credential'}, status=status.HTTP_400_BAD_REQUEST)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -235,18 +241,23 @@ class LoginAPIView(APIView):
         if serializer.is_valid():
             email = serializer.validated_data.get("email")
             phone_number = serializer.validated_data.get("phone_number")
+            
 
             #check if otp is in record and it's verified
             existing_otp = OTP.objects.filter(
             Q(email=email) | Q(phone_number=phone_number)
-            )
+            ).first()
             if existing_otp:
+                email = existing_otp.email
+                print(email)
                 if email:
-                    if existing_otp.expired:
+                    otp_record = OTP.objects.get(email=email, verified=True)
+                    if not otp_record.is_expired():
                         user = AnsaaUser.objects.filter(email=email).first()
-                        if user:
-                            refresh = RefreshToken.for_user(user)
-                            exist_otp.delete()
+                        authenticated_user = authenticate(request, email=email)
+                        if authenticated_user:
+                            refresh = RefreshToken.for_user(authenticated_user)
+                            otp_record.delete()
 
                             return Response({'refresh': str(refresh), 'access': str(refresh.access_token),}, status=status.HTTP_200_OK)  
                         else:
@@ -254,18 +265,6 @@ class LoginAPIView(APIView):
                     else:
                         otp_record.delete()
                         return Response({'error':'OTP expired, request for another'}, status=status.HTTP_400_BAD_REQUEST)
-                elif phone_number:
-                    if existing_otp.expired:
-                        user = AnsaaUser.objects.filter(phone_number=phone_number).first()
-                        if user:
-                            refresh = RefreshToken.for_user(user)
-                            exist_otp.delete()
-
-                            return Response({'refresh': str(refresh), 'access': str(refresh.access_token),}, status=status.HTTP_200_OK)  
-                        else:
-                            return Response({'error': 'Invalid user credentials'}, status.status.HTTP_400_BAD_REQUEST)
-                    else:
-                        otp_record.delete()
-                        return Response({'error':'OTP expired, request for another'}, status=status.HTTP_400_BAD_REQUEST)
+                
             return Response({'error': 'Invalid user credentials'}, status=status.HTTP_400_BAD_REQUEST)  
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

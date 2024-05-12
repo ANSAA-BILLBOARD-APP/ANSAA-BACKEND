@@ -1,5 +1,5 @@
 from django.contrib import admin
-from authentication.models import AnsaaUser, OTP, AnsaaApprovedUser
+from authentication.models import AnsaaUser, OTP, AnsaaApprovedUser, Task
 from django.contrib.auth.admin import UserAdmin
 from django.forms import TextInput, Textarea, CharField
 from django import forms
@@ -32,9 +32,11 @@ class AnsaaApprovedUserAdmin(admin.ModelAdmin):
     ordering = ('-date_added',)
     list_display = ('email','fullname','phone_number')
     readonly_fields = ('create_account','date_added',)
+    
 
 
 
 admin.site.register(AnsaaUser, UserAdminConfig)
 admin.site.register(OTP)
 admin.site.register(AnsaaApprovedUser, AnsaaApprovedUserAdmin)
+admin.site.register(Task)

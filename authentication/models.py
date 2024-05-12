@@ -7,8 +7,6 @@ from phonenumber_field.modelfields import PhoneNumberField
 from django.core.validators import EmailValidator
 import uuid
 
-
-
 class CustomAccountManager(BaseUserManager):
 
     def create_superuser(self, email, phone_number, fullname, password, **other_fields):
@@ -178,6 +176,7 @@ class AnsaaApprovedUser(models.Model):
     email = models.EmailField(unique=True)
     phone_number = PhoneNumberField(null=False, unique=True)
     fullname = models.CharField(max_length=250)
+    gender = models.TextField(choices=GENDER_CHOICES, null=True, blank=True)
     date_added = models.DateTimeField(default=timezone.now)
     create_account = models.BooleanField(default=False)
 
