@@ -4,7 +4,3 @@ venv
 db.sqlite3
 ./gitignore
 
-# EMAIL_HOST_PASSWORD = 'yygg yjbr vgxi oebz'
-
-# account_sid = 'ACf70ef8fd878f32665058f3b67e6b67c6'
-# auth_token = '428ffa7700978be12c3bb9e70d8b45d7'

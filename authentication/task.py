@@ -23,8 +23,8 @@ class EmailThread(threading.Thread):
 
 
 def generate_otp():
-        # Generate a 6-digit OTP
-        otp = ''.join(random.choices(string.digits, k=6))
+        # Generate a 4-digit OTP
+        otp = ''.join(random.choices(string.digits, k=4))
         return otp
 
 def send_otp_email(email, otp_code):

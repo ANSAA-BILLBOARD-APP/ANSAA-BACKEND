@@ -39,7 +39,7 @@ class CustomAccountManager(BaseUserManager):
         other_fields.setdefault('is_active', True)
 
         user_id_prefix = 'ansa'
-        user_id_suffix = uuid.uuid4().hex[:6]  # Generate 6-character random suffix
+        user_id_suffix = uuid.uuid4().hex[:8]  # Generate 8-character random suffix
 
         if password is not None:
             user = self.model(
@@ -90,6 +90,7 @@ class AnsaaUser(AbstractBaseUser, PermissionsMixin):
     picture = models.ImageField(upload_to=get_profile_image_filepath, blank=True)
     is_staff = models.BooleanField(_('staff status'), default=False)
     is_active = models.BooleanField(_('active'), default=True)
+    # zones = models.ManyToManyField('Zones', through='UserZone', related_name='users')
 
     def save(self, *args, **kwargs):
         if not self.picture:  # If no picture is provided
@@ -109,8 +110,8 @@ class AnsaaUser(AbstractBaseUser, PermissionsMixin):
 
     class Meta:
         ordering = ['-start_date']
-        verbose_name = _('user profile')
-        verbose_name_plural = _('users profiles')
+        verbose_name = _('Ansa User')
+        verbose_name_plural = _('Ansa Users')
 
     def __str__(self):
         return self.fullname
@@ -119,7 +120,7 @@ class Task(models.Model):
     title = models.CharField(max_length=100)
     description = models.TextField()
     is_completed = models.BooleanField(default=False)
-    owner = models.ForeignKey(AnsaaUser, on_delete=models.CASCADE)
+    user = models.ForeignKey(AnsaaUser, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.title
@@ -171,18 +172,3 @@ class OTP(models.Model):
     def __str__(self):
         return f"OTP for {self.email}"
         
-
-class AnsaaApprovedUser(models.Model):
-    email = models.EmailField(unique=True)
-    phone_number = PhoneNumberField(null=False, unique=True)
-    fullname = models.CharField(max_length=250)
-    gender = models.TextField(choices=GENDER_CHOICES, null=True, blank=True)
-    date_added = models.DateTimeField(default=timezone.now)
-    create_account = models.BooleanField(default=False)
-
-    class Meta:
-        verbose_name = _('Ansaa Approved User')
-        verbose_name_plural = _('Ansaa Approved User List')
-
-    def __str__(self):
-        return self.fullname
