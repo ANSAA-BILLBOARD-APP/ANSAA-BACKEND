@@ -46,9 +46,6 @@ class AssetRetrieveUpdateAPIView(RetrieveUpdateAPIView):
         self.perform_update(serializer)
         return Response(serializer.data)
 
-
-
-
 class AssetListAPIView(ListAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = AssetSerializer
@@ -56,3 +53,24 @@ class AssetListAPIView(ListAPIView):
     def get_queryset(self):
         user = self.request.user
         return Billboards.objects.filter(user=user)
+
+class AssetSearchAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self, request, *args, **kwargs):
+        # Retrieve query parameters
+        asset_type = request.query_params.get('asset_type', None)
+        zone = request.query_params.get('zone', None)
+        vacancy = request.query_params.get('vacancy', None)
+
+        # Filter billboards based on query parameters
+        billboards = Billboards.objects.all()
+        if asset_type:
+            billboards = billboards.filter(asset_type=asset_type)
+        if zone:
+            billboards = billboards.filter(zone=zone)
+        if vacancy:
+            billboards = billboards.filter(vacancy=vacancy)
+
+        # Serialize the queryset
+        serializer = AssetSerializer(billboards, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
