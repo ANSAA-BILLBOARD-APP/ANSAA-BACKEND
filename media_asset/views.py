@@ -61,16 +61,21 @@ class AssetSearchAPIView(APIView):
         asset_type = request.query_params.get('asset_type', None)
         zone = request.query_params.get('zone', None)
         vacancy = request.query_params.get('vacancy', None)
+        # city = request.query_params.get('city', None)
+
+        # search by location
+
 
         # Filter billboards based on query parameters
-        billboards = Billboards.objects.all()
+        assets = Billboards.objects.all()
         if asset_type:
-            billboards = billboards.filter(asset_type=asset_type)
+            assets = billboards.filter(asset_type=asset_type)
         if zone:
-            billboards = billboards.filter(zone=zone)
+            assets = billboards.filter(zone=zone)
+        # if city:
+        #     billboards = billboards.filter(city__icontains=city)
         if vacancy:
-            billboards = billboards.filter(vacancy=vacancy)
+            assets = billboards.filter(vacancy=vacancy)
 
-        # Serialize the queryset
-        serializer = AssetSerializer(billboards, many=True)
+        serializer = AssetSerializer(assets, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)

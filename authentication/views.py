@@ -11,8 +11,8 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework import status
-from . serializers import RequestOTPSerializer, LogoutSerializer, OTPVerificationSerializer, ProfileSerializer, RegistrationSerializer, LoginSerializer
-from . models import AnsaaUser, OTP, Task
+from . serializers import RequestOTPSerializer, LogoutSerializer, OTPVerificationSerializer, ProfileSerializer, RegistrationSerializer, LoginSerializer, DeviceDetailSerializer
+from . models import AnsaaUser, OTP, Task, DeviceDetail
 from . task import generate_otp, EmailThread, send_otp_email, send_otp_sms
 import asyncio
 
