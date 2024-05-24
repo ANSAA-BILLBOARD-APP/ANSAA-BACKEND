@@ -15,7 +15,7 @@ SECRET_KEY = 'django-insegergrfdgvq w 4r35y6745rab1'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["ansaa-backend-kappa.vercel.app"]
+ALLOWED_HOSTS = [".vercel.app"]
 
 
 # Application definition
