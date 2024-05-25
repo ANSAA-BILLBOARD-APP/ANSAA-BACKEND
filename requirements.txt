@@ -16,3 +16,4 @@ requests==2.31.0
 six==1.16.0
 supabase==2.4.5
 twilio==9.0.0
+whitenoise
