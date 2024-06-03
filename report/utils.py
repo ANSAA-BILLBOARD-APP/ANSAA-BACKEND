@@ -4,7 +4,8 @@ from django.utils import timezone
 from datetime import timedelta
 from media_asset.models import Billboards
 
-def filter_billboards(time_filter, vacancy):
+
+def filter_billboards(user, time_filter=None, vacancy=None):
     now = timezone.now()
     
     if time_filter == 'week':
@@ -14,17 +15,20 @@ def filter_billboards(time_filter, vacancy):
     elif time_filter == 'year':
         start_date = now.replace(month=1, day=1)
     else:
-        start_date = None  # No time filter applied
+        start_date = None
+
+    queryset = Billboards.objects.filter(user=user)
 
     if start_date:
-        billboards = Billboards.objects.filter(date__gte=start_date, vacancy=vacancy)
-    else:
-        billboards = Billboards.objects.filter(vacancy=vacancy)
-        
-    return billboards
+        queryset = queryset.filter(date__gte=start_date)
 
-def generate_csv_report(time_filter, vacancy):
-    billboards = filter_billboards(time_filter, vacancy)
+    if vacancy:
+        queryset = queryset.filter(vacancy=vacancy)
+
+    return queryset
+
+def generate_csv_report(user, time_filter=None, vacancy=None):
+    billboards = filter_billboards(user, time_filter, vacancy)
     
     output = StringIO()
     writer = csv.writer(output)
