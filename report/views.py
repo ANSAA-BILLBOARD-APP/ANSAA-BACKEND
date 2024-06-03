@@ -8,7 +8,7 @@ from .serializers import ReportSerializer
 from drf_spectacular.utils import extend_schema
 
 @extend_schema(
-    description="The endpoint is use to download in csv format by date(week, month and year) and vacancy, \n eg. http://www.dotsassets/api/media-asset/asset/search/asset/?asset_type=static",
+    description="The endpoint is use to download in csv format by date(week, month and year) and vacancy eg,    \n\n http://localhost:8000/api/download-report/?time_filter=week \n\n http://localhost:8000/api/download-report/?time_filter=month  \n\n http://localhost:8000/api/download-report/?time_filter=year \n\n http://localhost:8000/api/download-report/?vacancy=vacant \n\n http://localhost:8000/api/download-report/?vacancy=occupied \n\n http://localhost:8000/api/download-report/?time_filter=week&vacancy=vacant \n\n http://localhost:8000/api/download-report/?time_filter=month&vacancy=occupied",
     summary='Media asset report download'
 )
 class ReportDownloadView(APIView):
@@ -16,7 +16,7 @@ class ReportDownloadView(APIView):
     serializer_class = ReportSerializer
     def get(self, request, format=None):
         user = request.user
-        if not user.is_authenticated:
+        if not user:
             return Response({'error': 'Authentication required.'}, status=status.HTTP_401_UNAUTHORIZED)
         
         time_filter = request.query_params.get('time_filter')

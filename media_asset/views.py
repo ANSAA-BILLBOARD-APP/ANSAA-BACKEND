@@ -50,7 +50,7 @@ class AssetListAPIView(ListAPIView):
 
 
 @extend_schema(
-    description="The endpoint is use to filter media assets by (asset type, zone and vacancy), \n eg. http://www.dotsassets/api/media-asset/asset/search/asset/?asset_type=static",
+    description="The endpoint is use to filter media assets by (asset type, zone and vacancy).",
     summary='Media Search(Filter) endpoint'
 )
 class AssetSearchAPIView(APIView):
@@ -65,15 +65,15 @@ class AssetSearchAPIView(APIView):
         # city = request.query_params.get('city', None)
 
         # Filter billboards based on query parameters
-        assets = Billboards.objects.all()
+        assets = Billboards.objects.filter(user=request.user)
         if asset_type:
-            assets = billboards.filter(asset_type=asset_type)
+            assets = assets.filter(asset_type=asset_type)
         if zone:
-            assets = billboards.filter(zone=zone)
+            assets = assets.filter(zone=zone)
         # if city:
-        #     billboards = billboards.filter(city__icontains=city)
-        if vacancy:
-            assets = billboards.filter(vacancy=vacancy)
+        #     assets = assets.filter(city__icontains=city)
+        if vacancy is not None:
+            assets = assets.filter(vacancy=vacancy)
 
         serializer = AssetSerializer(assets, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
