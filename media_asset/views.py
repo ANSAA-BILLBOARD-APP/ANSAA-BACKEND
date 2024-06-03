@@ -50,7 +50,7 @@ class AssetListAPIView(ListAPIView):
 
 
 @extend_schema(
-    description="The endpoint is use to filter media assets by (asset type, zone and vacancy), \n eg. http://127.0.0.1:8000/api/media-asset/asset/search/asset/?asset_type=static",
+    description="The endpoint is use to filter media assets by (asset type, zone and vacancy), \n eg. http://www.dotsassets/api/media-asset/asset/search/asset/?asset_type=static",
     summary='Media Search(Filter) endpoint'
 )
 class AssetSearchAPIView(APIView):

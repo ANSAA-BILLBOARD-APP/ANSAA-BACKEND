@@ -2,7 +2,7 @@ import csv
 from io import StringIO
 from django.utils import timezone
 from datetime import timedelta
-from .media_asset.models import Billboards
+from media_asset.models import Billboards
 
 def filter_billboards(time_filter, vacancy):
     now = timezone.now()
@@ -14,9 +14,13 @@ def filter_billboards(time_filter, vacancy):
     elif time_filter == 'year':
         start_date = now.replace(month=1, day=1)
     else:
-        raise ValueError("Invalid time filter")
+        start_date = None  # No time filter applied
 
-    billboards = Billboards.objects.filter(date__gte=start_date, vacancy=vacancy)
+    if start_date:
+        billboards = Billboards.objects.filter(date__gte=start_date, vacancy=vacancy)
+    else:
+        billboards = Billboards.objects.filter(vacancy=vacancy)
+        
     return billboards
 
 def generate_csv_report(time_filter, vacancy):
