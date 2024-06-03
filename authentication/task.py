@@ -55,7 +55,7 @@ def send_otp_sms(phone_number, otp_code):
                             to=phone_number
                         )
 
-    # print(message.sid)
+    print(message.sid)
 
 
 

@@ -24,6 +24,11 @@ class CreateAssetAPIView(CreateAPIView):
         
         if serializer.is_valid():
             serializer.save(user_id=user)
+
+            add_media_task = Task.objects.get(user=user, title="Add a Media Asset")
+            add_media_task.is_completed = True
+            add_media_task.save()
+
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
