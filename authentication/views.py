@@ -10,16 +10,21 @@ from rest_framework.views import APIView
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.generics import RetrieveUpdateAPIView, RetrieveAPIView
 from rest_framework import status
-from . serializers import RequestOTPSerializer, LogoutSerializer, OTPVerificationSerializer, ProfileSerializer, RegistrationSerializer, LoginSerializer, DeviceDetailSerializer
-from . models import AnsaaUser, OTP, Task, DeviceDetail
+from . serializers import RequestOTPSerializer, LogoutSerializer, OTPVerificationSerializer, ProfileSerializer, LoginSerializer
+from . models import AnsaaUser, OTP
+from todo.models import Task
 from . task import generate_otp, EmailThread, send_otp_email, send_otp_sms
 import asyncio
+from drf_spectacular.utils import extend_schema
 
 
 
-
-
+@extend_schema(
+    description="This endpoint takes either the user's email or phone in order to dispatch an OTP. Note that the user must be an Ansa authorise user.",
+    summary='User OTP Request'
+)
 class RequestOTP(APIView):
     serializer_class = RequestOTPSerializer
 
@@ -79,7 +84,10 @@ class RequestOTP(APIView):
         return Response({"message": "OTP generated and sent successfully."}, status=status.HTTP_201_CREATED)
 
 
-
+@extend_schema(
+    description="This endpoint takes either the user's email or phone number and a four-digit OTP and validates the user's OTP.",
+    summary='User OTP verification'
+)
 class ValidateOTPView(APIView):
     serializer_class = OTPVerificationSerializer
 
@@ -128,7 +136,10 @@ class ValidateOTPView(APIView):
         }
         return Response(data=response, status=status.HTTP_200_OK)
         
-
+@extend_schema(
+    description="This endpoint takes user refresh token.",
+    summary='Logout'
+)
 class LogoutView(APIView):
     permission_classes = [IsAuthenticated]
     serializer_class = LogoutSerializer
@@ -168,7 +179,6 @@ class UserProfileViews(APIView):
     def put(self, request, format=None):
         user = request.user
         user_profile = AnsaaUser.objects.get(pk=user.pk)
-        update_profile_task = Task.objects.filter(owner=request.user).first()
         if not user_profile:
             return Response({'message': 'User profile not found'}, status=status.HTTP_404_NOT_FOUND)
         
@@ -178,14 +188,23 @@ class UserProfileViews(APIView):
 
         user_profile.picture = picture
         user_profile.save()
-        update_profile_task.is_completed = True
-        update_profile_task.save()
+
+        try:
+            update_profile_task = Task.objects.get(user=user, title="Add a Profile Picture")
+            update_profile_task.is_completed = True
+            update_profile_task.save()
+        except Task.DoesNotExist:
+            return Response({'message': 'Task not found'}, status=status.HTTP_404_NOT_FOUND)
 
         serializer = ProfileSerializer(user_profile)
         return Response(serializer.data)
 
-
+@extend_schema(
+    description='The users "phone number" or "email" is required for authentication on this login endpoint.',
+    summary='User Login'
+)
 class LoginAPIView(APIView):
+    serializer_class = LoginSerializer
     def post(self, request, format=None):
         serializer = LoginSerializer(data=request.data)
         if serializer.is_valid():
@@ -199,7 +218,6 @@ class LoginAPIView(APIView):
             ).first()
             if existing_otp:
                 email = existing_otp.email
-                print(email)
                 if email:
                     otp_record = OTP.objects.get(email=email, verified=True)
                     if not otp_record.is_expired():
@@ -218,3 +236,4 @@ class LoginAPIView(APIView):
                 
             return Response({'error': 'Invalid user credentials'}, status=status.HTTP_400_BAD_REQUEST)  
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+

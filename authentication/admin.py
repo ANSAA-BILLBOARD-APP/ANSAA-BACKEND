@@ -1,5 +1,5 @@
 from django.contrib import admin
-from authentication.models import AnsaaUser, OTP, Task
+from authentication.models import AnsaaUser, OTP
 from django.contrib.auth.admin import UserAdmin
 from django.forms import TextInput, Textarea, CharField
 from django import forms
@@ -31,4 +31,3 @@ class UserAdminConfig(UserAdmin):
 
 admin.site.register(AnsaaUser, UserAdminConfig)
 admin.site.register(OTP)
-admin.site.register(Task)

@@ -12,8 +12,10 @@ urlpatterns = [
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path("api/schema/docs/", SpectacularSwaggerView.as_view(url_name="schema")),
     path('admin/', admin.site.urls),
-    path('', include("authentication.urls")),
-    path('api/media-asset/', include("media_asset.urls")),
+    path('auth/', include("authentication.urls")),
+    path('todo/', include('todo.urls')),
+    path('report/', include('report.urls')),
+    path('media-asset/', include("media_asset.urls")),
 ]
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

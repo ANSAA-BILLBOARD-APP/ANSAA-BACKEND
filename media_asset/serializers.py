@@ -1,11 +1,5 @@
-from authentication.models import Task
 from .models import UserZone, Billboards
 from rest_framework import serializers
-
-class TaskSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Task
-        fields = ['title','description','is_completed','user']
 
 
 class UserZoneSerializer(serializers.ModelSerializer):

@@ -4,7 +4,7 @@ from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
 from phonenumber_field.serializerfields import PhoneNumberField
-from .models import AnsaaUser, OTP, DeviceDetail
+from .models import AnsaaUser, OTP
 
 
 class RequestOTPSerializer(serializers.ModelSerializer):
@@ -24,20 +24,6 @@ class OTPVerificationSerializer(serializers.ModelSerializer):
         model = OTP
         fields = ["email", "phone_number", "otp"]   
 
-
-# USER REGISTRATION API SERIALIZER
-class RegistrationSerializer(serializers.Serializer):
-    email = serializers.EmailField(required=False)
-    phone_number = PhoneNumberField(required=False)
-    fullname = serializers.CharField(required=False)
-    gender = serializers.CharField(required=False)
-    
-    class Meta:
-        model: AnsaaUser
-        fields: ['email','phone_number','fullname','gender']
-
-    def create(self, validated_data):
-        return AnsaaUser.objects.create(**validated_data)
 
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField(required=False)
@@ -59,9 +45,3 @@ class ProfileSerializer(serializers.ModelSerializer):
 
 class LogoutSerializer(serializers.Serializer):
     refresh_token = serializers.CharField()
-
-class DeviceDetailSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = DeviceDetail
-        fields = ['user', 'device_name', 'device_id', 'os', 'created_at']
-        read_only_fields = ['created_at']
