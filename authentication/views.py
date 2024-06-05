@@ -47,7 +47,6 @@ class RequestOTP(APIView):
         if not approved_user:
             return Response({'error': 'Invalid user credential'}, status=status.HTTP_400_BAD_REQUEST)
 
-        
         # Generate a random 4-digit OTP
         otp_code = generate_otp()
         expiration_time = timezone.now() + timezone.timedelta(minutes=5)

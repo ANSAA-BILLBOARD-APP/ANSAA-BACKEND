@@ -165,6 +165,8 @@ REST_FRAMEWORK = {
 }
 SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=5),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
 }
 
 # Default primary key field type
@@ -178,8 +180,7 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'ecclesiafarmz@gmail.com'
 EMAIL_HOST_PASSWORD = 'snfu jygi cnhr klvv'
-# account_sid = 'ACf70ef8fd878f32665058f3b67e6b67c6'
-# auth_token = '428ffa7700978be12c3bb9e70d8b45d7'
+
 
 
 
