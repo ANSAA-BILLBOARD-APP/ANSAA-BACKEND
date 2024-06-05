@@ -1,4 +1,3 @@
-import os
 import threading, random, string
 from django.utils import timezone
 from django.conf import settings
