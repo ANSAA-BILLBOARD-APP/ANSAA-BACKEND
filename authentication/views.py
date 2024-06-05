@@ -102,8 +102,7 @@ class ValidateOTPView(APIView):
 
         if not (email or phone_number):
             response = {
-                'message': 'Please provide either email or phone number.',
-                'STATUS': 'ERROR'
+                'error': 'Please provide either email or phone number.',
             }
             return Response(data=response, status=status.HTTP_400_BAD_REQUEST)
 
@@ -114,15 +113,13 @@ class ValidateOTPView(APIView):
                 otp_record = OTP.objects.get(phone_number=phone_number, otp=otp, verified=False)
         except OTP.DoesNotExist:
             response = {
-                'message': 'Invalid OTP.',
-                'STATUS': 'ERROR'
+                'error': 'Invalid OTP.',
             }
             return Response(data=response, status=status.HTTP_400_BAD_REQUEST)
 
         if otp_record.is_expired():
             response = {
-                'message': 'OTP has expired. Please generate a new one.',
-                'STATUS': 'ERROR'
+                'error': 'OTP has expired. Please generate a new one.',
             }
             return Response(data=response, status=status.HTTP_400_BAD_REQUEST)
 
@@ -132,7 +129,6 @@ class ValidateOTPView(APIView):
 
         response = {
             'message': 'OTP verified.',
-            'STATUS': 'SUCCESS'
         }
         return Response(data=response, status=status.HTTP_200_OK)
         
@@ -180,11 +176,11 @@ class UserProfileViews(APIView):
         user = request.user
         user_profile = AnsaaUser.objects.get(pk=user.pk)
         if not user_profile:
-            return Response({'message': 'User profile not found'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'User profile not found'}, status=status.HTTP_404_NOT_FOUND)
         
         picture = request.data.get('picture')
         if not picture:
-            return Response({'message': 'Picture field is required'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'Picture field is required'}, status=status.HTTP_400_BAD_REQUEST)
 
         user_profile.picture = picture
         user_profile.save()
@@ -194,7 +190,7 @@ class UserProfileViews(APIView):
             update_profile_task.is_completed = True
             update_profile_task.save()
         except Task.DoesNotExist:
-            return Response({'message': 'Task not found'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'Task not found'}, status=status.HTTP_404_NOT_FOUND)
 
         serializer = ProfileSerializer(user_profile)
         return Response(serializer.data)
