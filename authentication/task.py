@@ -1,3 +1,4 @@
+import os
 import threading, random, string
 from django.utils import timezone
 from django.conf import settings
@@ -56,8 +57,8 @@ def send_otp_email(email, otp_code):
 
     
 def send_otp_sms(phone_number, otp_code):
-    account_sid = 'AC6396c21b21ffc4e5bf06b156f8b29a83'
-    auth_token = '3774df73a63dc0d2ee00fed85124cbb2'
+    account_sid = os.environ.get('SID')
+    auth_token = os.environ.get('TOKEN')
     client = Client(account_sid, auth_token)
     verification_check = client.verify
     message = client.messages.create(
