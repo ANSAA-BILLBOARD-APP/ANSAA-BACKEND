@@ -18,7 +18,7 @@ from todo.models import Task
 from . task import generate_otp, EmailThread, send_otp_email, send_otp_sms
 import asyncio
 from drf_spectacular.utils import extend_schema
-
+import resend
 
 
 @extend_schema(
