@@ -157,7 +157,6 @@ class LogoutView(APIView):
             return Response({'error': 'Refresh token not provided'}, status=status.HTTP_400_BAD_REQUEST)
 
 
-
 class UserProfileViews(APIView):
     permission_classes = [IsAuthenticated]
     serializer_class = ProfileSerializer
@@ -207,7 +206,7 @@ class LoginAPIView(APIView):
             phone_number = serializer.validated_data.get("phone_number")
             
 
-            #check if otp is in record and it's verified
+            #if otp is in record and it's verified
             existing_otp = OTP.objects.filter(
             Q(email=email) | Q(phone_number=phone_number)
             ).first()
