@@ -183,8 +183,8 @@ EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
 EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True') == 'True'
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
-account_sid = os.environ.get('ACCOUNT_SID')
-auth_token = os.environ.get('ACCOUNT_TOKEN')
+ACCOUNT_SID = os.environ.get('ACCOUNT_SID')
+ACCOUNT_TOKEN = os.environ.get('ACCOUNT_TOKEN')
 
 
 

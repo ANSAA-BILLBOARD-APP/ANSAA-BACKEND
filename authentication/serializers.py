@@ -33,7 +33,6 @@ class LoginSerializer(serializers.Serializer):
         model = AnsaaUser
         fields= ['email','phone_number']
 
-
 class ProfileSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(source='email.email', read_only=True)
     phone_number = serializers.CharField()

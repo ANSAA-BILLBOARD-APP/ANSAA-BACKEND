@@ -57,8 +57,8 @@ def send_otp_email(email, otp_code):
 
     
 def send_otp_sms(phone_number, otp_code):
-    account_sid = settings.account_sid
-    auth_token = settings.auth_token
+    account_sid = settings.ACCOUNT_SID
+    auth_token = settings.AUTH_TOKEN
     client = Client(account_sid, auth_token)
     verification_check = client.verify
     message = client.messages.create(
