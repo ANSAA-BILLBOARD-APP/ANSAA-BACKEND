@@ -58,6 +58,7 @@ def send_otp_email(email, otp_code):
     
 def send_otp_sms(phone_number, otp_code):
     account_sid = os.environ.get('SID')
+    print(account_sid)
     auth_token = os.environ.get('TOKEN')
     client = Client(account_sid, auth_token)
     verification_check = client.verify
