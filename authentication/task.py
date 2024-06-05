@@ -34,25 +34,25 @@ def send_otp_email(email, otp_code):
     template = loader.get_template('mail_template.txt')
     parameters = {'otp': otp_code}
     email_content = template.render(parameters)
-    resend.api_key = "re_AjPbuZTK_HaLzRfA1gf9o9BDiawZ74fJZ"
+    # resend.api_key = "re_AjPbuZTK_HaLzRfA1gf9o9BDiawZ74fJZ"
 
-    params: resend.Emails.SendParams = {
-        "from": "Ansa <onboarding@resend.dev>",
-        "subject": email_subject,
-        "html": email_content,
-        "to": [email],
-    }
+    # params: resend.Emails.SendParams = {
+    #     "from": "Ansa <onboarding@resend.dev>",
+    #     "subject": email_subject,
+    #     "html": email_content,
+    #     "to": [email],
+    # }
 
-    email = resend.Emails.send(params)
-    print(email)
-    # email_message = EmailMultiAlternatives(
-    #     email_subject,
-    #     email_content,
-    #     settings.EMAIL_HOST_USER,
-    #     [email]
-    # )
-    # email_message.content_subtype = 'html'
-    # EmailThread(email_message).start()
+    # email = resend.Emails.send(params)
+    # print(email)
+    email_message = EmailMultiAlternatives(
+        email_subject,
+        email_content,
+        settings.EMAIL_HOST_USER,
+        [email]
+    )
+    email_message.content_subtype = 'html'
+    EmailThread(email_message).start()
 
     
 def send_otp_sms(phone_number, otp_code):
