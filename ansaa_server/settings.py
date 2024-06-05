@@ -185,9 +185,9 @@ EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
 EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True') == 'True'
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
-ACCOUNT_SID = os.environ.get('ACCOUNT_SID')
-ACCOUNT_TOKEN = os.environ.get('ACCOUNT_TOKEN')
-
+ACCOUNT_SID = os.environ.get('TWILIO_ACCOUNT_SID')
+ACCOUNT_TOKEN = os.environ.get('TWILIO_AUTH_TOKEN')
+TWILIO_PHONE_NUMBER = os.environ.get('TWILIO_PHONE_NUMBER')
 
 
 
